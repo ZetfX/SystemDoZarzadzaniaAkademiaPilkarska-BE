@@ -3,12 +3,10 @@ package edu.uni.lodz.system.akademia.pilkarska.domain.model.user;
 import edu.uni.lodz.system.akademia.pilkarska.Exceptions.exceptions.FieldTakenException;
 import edu.uni.lodz.system.akademia.pilkarska.Exceptions.exceptions.NotFoundException;
 import edu.uni.lodz.system.akademia.pilkarska.application.generators.PassGenerator;
+import edu.uni.lodz.system.akademia.pilkarska.application.requests.NewPasswordRequest;
 import edu.uni.lodz.system.akademia.pilkarska.application.responses.SignUpResponse;
 import edu.uni.lodz.system.akademia.pilkarska.application.senders.EmailSender;
-import edu.uni.lodz.system.akademia.pilkarska.application.validators.UserDataValidator;
 import edu.uni.lodz.system.akademia.pilkarska.domain.model.academy.Academy;
-import edu.uni.lodz.system.akademia.pilkarska.domain.model.enums.UserRole;
-import edu.uni.lodz.system.akademia.pilkarska.domain.model.trainingGroup.TrainingGroup;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -38,15 +36,9 @@ public class UserService implements UserDetailsService {
         return new SignUpResponse("Użytkownik został zarejestrowany pomyslnie");
     }
 
-    public String signUpUser(User user) {
-        validateUserData(user.getEmail());
-        encryptPassword(user);
-        userRepository.save(user);
-        return "Pomyślnie dodano użytkownika";
-    }
 
     public void validateUserData(String email) {
-       isEmailTaken(email);
+        isEmailTaken(email);
     }
 
     public User generatePasswordAndSaveUser(User user) {
@@ -59,8 +51,7 @@ public class UserService implements UserDetailsService {
         return user;
     }
 
-    public boolean hasEmailChanged(String prevEmail, String newEmail)
-    {
+    public boolean hasEmailChanged(String prevEmail, String newEmail) {
         return !prevEmail.equals(newEmail);
     }
 
@@ -69,7 +60,7 @@ public class UserService implements UserDetailsService {
     }
 
     private void isEmailTaken(String email) {
-        if (findUserByEmail(email).isPresent()){
+        if (findUserByEmail(email).isPresent()) {
             throw new FieldTakenException("Email zajęty");
         }
     }
@@ -81,17 +72,27 @@ public class UserService implements UserDetailsService {
         return null;
     }
 
-    public void deleteUser(User user){
+    public void deleteUser(User user) {
         userRepository.delete(user);
     }
-    private Optional<User> findUserByEmail(String email)
-    {
+
+    private Optional<User> findUserByEmail(String email) {
         return userRepository.findByEmail(email);
     }
-    public Optional<User> findUserById(Long userId){
+
+    public Optional<User> findUserById(Long userId) {
         return userRepository.findById(userId);
     }
-    private void encryptPassword(User user) {
+
+    public void encryptPassword(User user) {
         user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
+    }
+
+    public User changePassword(NewPasswordRequest newPassword, Long userId) {
+        User user = getUserById(userId);
+        user.setPassword(newPassword.getNewPassword());
+        encryptPassword(user);
+        userRepository.save(user);
+        return user;
     }
 }

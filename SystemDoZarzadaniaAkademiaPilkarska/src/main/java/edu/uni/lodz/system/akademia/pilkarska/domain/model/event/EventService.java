@@ -5,13 +5,17 @@ import edu.uni.lodz.system.akademia.pilkarska.Exceptions.exceptions.NotFoundExce
 import edu.uni.lodz.system.akademia.pilkarska.Exceptions.exceptions.OrganizerException;
 import edu.uni.lodz.system.akademia.pilkarska.application.requests.CreateEditEventRequest;
 import edu.uni.lodz.system.akademia.pilkarska.application.responses.AllEventsResponse;
+import edu.uni.lodz.system.akademia.pilkarska.application.responses.CoachTrainingGroupResponse;
 import edu.uni.lodz.system.akademia.pilkarska.application.responses.CreateEditEventResponse;
 import edu.uni.lodz.system.akademia.pilkarska.application.responses.DeleteResponse;
 import edu.uni.lodz.system.akademia.pilkarska.application.responses.EventDto;
 import edu.uni.lodz.system.akademia.pilkarska.domain.model.academy.Academy;
 import edu.uni.lodz.system.akademia.pilkarska.domain.model.academy.AcademyService;
+import edu.uni.lodz.system.akademia.pilkarska.domain.model.coach.CoachService;
+import edu.uni.lodz.system.akademia.pilkarska.domain.model.enums.UserRole;
 import edu.uni.lodz.system.akademia.pilkarska.domain.model.object.Object;
 import edu.uni.lodz.system.akademia.pilkarska.domain.model.object.ObjectService;
+import edu.uni.lodz.system.akademia.pilkarska.domain.model.player.PlayerService;
 import edu.uni.lodz.system.akademia.pilkarska.domain.model.trainingGroup.TrainingGroup;
 import edu.uni.lodz.system.akademia.pilkarska.domain.model.trainingGroup.TrainingGroupService;
 import edu.uni.lodz.system.akademia.pilkarska.domain.model.user.User;
@@ -38,6 +42,8 @@ public class EventService {
     private final UserService userService;
     private final AcademyService academyService;
     private final EventRepository eventRepository;
+    private final CoachService coachService;
+    private final PlayerService playerService;
 
 
     public AllEventsResponse getEvents(Long academyId) {
@@ -55,6 +61,7 @@ public class EventService {
     }
 
     public CreateEditEventResponse createEvent(CreateEditEventRequest createEditEventRequest) {
+
         if (isStartTimeLater(createEditEventRequest.getEndTime(),createEditEventRequest.getStartTime())) {
             throw new EventTimeException("Czas rozpoczęcia nie może być późniejszy niż czas zakończenia");
         }
@@ -157,9 +164,37 @@ public class EventService {
        return endTime <= startTime;
     }
 
-
     public DeleteResponse deleteEvent(Long eventId) {
         eventRepository.deleteById(eventId);
         return new DeleteResponse("Pomyślnie usunięto wydarzenie");
+    }
+
+    public AllEventsResponse getEventsByTrainingGroup(Long userId) {
+        User user = userService.getUserById(userId);
+        TrainingGroup trainingGroup = new TrainingGroup();
+        if(user.getUserRole() == UserRole.COACH)
+        {
+           CoachTrainingGroupResponse response = coachService.getCoachTrainingGroup(userId);
+           trainingGroup = response.getTrainingGroup();
+        }
+       if(user.getUserRole() == UserRole.CASUAL_USER)
+       {
+           trainingGroup = playerService.getPlayerTrainingGroup(userId);
+       }
+
+       if(trainingGroup.getId() == null)
+       {
+           return new AllEventsResponse();
+       }
+        Set<Event> events = eventRepository.getEventsByTrainingGroup(trainingGroup)
+                .orElseThrow(() -> new NotFoundException("Brak wydarzeń dla tej grupy treningowej"));
+
+        Set<EventDto> modifiedEvents = new HashSet<>();
+        for (var event : events) {
+
+            modifiedEvents.add(toEventDto(event));
+        }
+
+        return new AllEventsResponse(modifiedEvents);
     }
 }

@@ -64,6 +64,7 @@ public class CoachService {
                 coachToUpdate.getUser().setEmail(createEditCoachRequest.getEmail());
                 String newPassword = new PassGenerator().generatePassword();
                 coachToUpdate.getUser().setPassword(newPassword);
+                userService.encryptPassword(coachToUpdate.getUser());
                 coachRepository.save(coachToUpdate);
                 new EmailSender().sendEmail(createEditCoachRequest.getEmail(),newPassword);
                 return new CreateEditCoachResponse(coachToUpdate);
@@ -95,7 +96,7 @@ public class CoachService {
         Coach coach = getCoachByUser(user);
         if(coach.getTrainingGroup() ==null)
         {
-            throw new NotFoundException("Brak grupy treningowej przypisanej do trenera nie można zaczać tworzyć wydarzenia");
+            throw new NotFoundException("Brak grupy treningowej przypisanej do trenera");
         }
         return new CoachTrainingGroupResponse(coach.getTrainingGroup());
     }

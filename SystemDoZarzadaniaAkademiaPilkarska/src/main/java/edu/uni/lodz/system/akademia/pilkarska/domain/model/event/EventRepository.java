@@ -2,6 +2,7 @@ package edu.uni.lodz.system.akademia.pilkarska.domain.model.event;
 
 import edu.uni.lodz.system.akademia.pilkarska.domain.model.academy.Academy;
 import edu.uni.lodz.system.akademia.pilkarska.domain.model.object.Object;
+import edu.uni.lodz.system.akademia.pilkarska.domain.model.trainingGroup.TrainingGroup;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -15,4 +16,7 @@ interface EventRepository extends JpaRepository<Event, Long> {
 
     @Query(value = "SELECT e from Event e where e.academy = :academy")
     Optional<Set<Event>> getEventsByAcademy(@Param("academy") Academy academy);
+
+    @Query(value = "SELECT e from Event e where e.trainingGroup = :trainingGroup")
+    Optional<Set<Event>> getEventsByTrainingGroup(@Param("trainingGroup") TrainingGroup trainingGroup);
 }

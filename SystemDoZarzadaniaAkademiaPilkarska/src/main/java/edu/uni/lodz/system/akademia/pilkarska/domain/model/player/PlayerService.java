@@ -4,19 +4,22 @@ import edu.uni.lodz.system.akademia.pilkarska.Exceptions.exceptions.NotFoundExce
 import edu.uni.lodz.system.akademia.pilkarska.application.generators.PassGenerator;
 import edu.uni.lodz.system.akademia.pilkarska.application.requests.CreateEditPlayerRequest;
 import edu.uni.lodz.system.akademia.pilkarska.application.responses.AllPlayersResponse;
+import edu.uni.lodz.system.akademia.pilkarska.application.responses.CoachTrainingGroupResponse;
 import edu.uni.lodz.system.akademia.pilkarska.application.responses.CreateEditPlayerResponse;
 import edu.uni.lodz.system.akademia.pilkarska.application.responses.DeleteResponse;
 import edu.uni.lodz.system.akademia.pilkarska.application.senders.EmailSender;
 import edu.uni.lodz.system.akademia.pilkarska.domain.model.academy.Academy;
 import edu.uni.lodz.system.akademia.pilkarska.domain.model.academy.AcademyService;
+import edu.uni.lodz.system.akademia.pilkarska.domain.model.coach.Coach;
 import edu.uni.lodz.system.akademia.pilkarska.domain.model.enums.UserRole;
 import edu.uni.lodz.system.akademia.pilkarska.domain.model.trainingGroup.TrainingGroup;
 import edu.uni.lodz.system.akademia.pilkarska.domain.model.trainingGroup.TrainingGroupService;
 import edu.uni.lodz.system.akademia.pilkarska.domain.model.user.User;
 import edu.uni.lodz.system.akademia.pilkarska.domain.model.user.UserService;
 import lombok.AllArgsConstructor;
-import java.util.Set;
 import org.springframework.stereotype.Service;
+
+import java.util.Set;
 
 @Service
 @AllArgsConstructor
@@ -32,8 +35,11 @@ public class PlayerService {
     }
 
     public CreateEditPlayerResponse createPlayer(CreateEditPlayerRequest createEditPlayerRequest) {
+
         TrainingGroup trainingGroup = trainingGroupService.getTrainingGroupById(createEditPlayerRequest.getTrainingGroupId());
-        trainingGroup.setPlayerCount(trainingGroup.getPlayerCount() + 1);
+        if (trainingGroup != null) {
+            trainingGroup.setPlayerCount(trainingGroup.getPlayerCount() + 1);
+        }
         Academy academy = academyService.getAcademyById(createEditPlayerRequest.getAcademyId());
         User user = new User(createEditPlayerRequest.getName(), createEditPlayerRequest.getSurname(), createEditPlayerRequest.getEmail(), academy, UserRole.CASUAL_USER);
         User userWithPassword = userService.generatePasswordAndSaveUser(user);
@@ -59,8 +65,11 @@ public class PlayerService {
         playerToUpdate.getUser().setSurname(createEditPlayerRequest.getSurname());
         TrainingGroup trainingGroup = trainingGroupService.getTrainingGroupById(createEditPlayerRequest.getTrainingGroupId());
         TrainingGroup playerToUpdateTrainingGroup = playerToUpdate.getTrainingGroup();
-        if (!playerToUpdateTrainingGroup.getId().equals(trainingGroup.getId())) {
-            playerToUpdateTrainingGroup.setPlayerCount(playerToUpdateTrainingGroup.getPlayerCount() - 1);
+        if (playerToUpdateTrainingGroup != null) {
+            if (!playerToUpdateTrainingGroup.getId().equals(trainingGroup.getId())) {
+                playerToUpdateTrainingGroup.setPlayerCount(playerToUpdateTrainingGroup.getPlayerCount() - 1);
+                trainingGroup.setPlayerCount(trainingGroup.getPlayerCount() + 1);
+            }
             trainingGroup.setPlayerCount(trainingGroup.getPlayerCount() + 1);
         }
         playerToUpdate.setTrainingGroup(trainingGroup);
@@ -69,6 +78,7 @@ public class PlayerService {
             playerToUpdate.getUser().setEmail(createEditPlayerRequest.getEmail());
             String newPassword = new PassGenerator().generatePassword();
             playerToUpdate.getUser().setPassword(newPassword);
+            userService.encryptPassword(playerToUpdate.getUser());
             playerRepository.save(playerToUpdate);
             new EmailSender().sendEmail(createEditPlayerRequest.getEmail(), newPassword);
             return new CreateEditPlayerResponse(playerToUpdate);
@@ -90,8 +100,22 @@ public class PlayerService {
         return playerRepository.findById(playerId).orElseThrow(() -> new NotFoundException("Nie znaleziono zawodnika o takim id"));
     }
 
-    public Set<Player> getPlayersByTrainingGroup (TrainingGroup trainingGroup){
+    public Set<Player> getPlayersByTrainingGroup(TrainingGroup trainingGroup) {
         return playerRepository.getPlayersByTrainingGroup(trainingGroup).orElseThrow(() -> new NotFoundException("Nie znaleziono zadnych zawodników w tej grupie treningowej"));
+    }
+
+    public TrainingGroup getPlayerTrainingGroup(Long userId) {
+        User user = userService.getUserById(userId);
+        Player player = getPlayerByUser(user);
+        if(player.getTrainingGroup() == null)
+        {
+            throw new NotFoundException("Brak grupy treningowej przypisanej do zawodnika");
+        }
+        return player.getTrainingGroup();
+    }
+
+    private Player getPlayerByUser (User user){
+        return playerRepository.getPlayerByUser(user).orElseThrow(() -> new NotFoundException( "Nie znaleziono trenera o takim id"));
     }
 
 }

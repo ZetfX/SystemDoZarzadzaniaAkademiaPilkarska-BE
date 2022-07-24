@@ -1,6 +1,6 @@
 package edu.uni.lodz.system.akademia.pilkarska.application.services;
 
-import edu.uni.lodz.system.akademia.pilkarska.Exceptions.exceptions.FieldTakenException;
+import edu.uni.lodz.system.akademia.pilkarska.application.requests.NewPasswordRequest;
 import edu.uni.lodz.system.akademia.pilkarska.application.requests.SignUpRequest;
 import edu.uni.lodz.system.akademia.pilkarska.application.responses.SignUpResponse;
 import edu.uni.lodz.system.akademia.pilkarska.application.validators.EmailValidator;
@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @AllArgsConstructor
-public class SignupService {
+public class AuthService {
     @Autowired
     private final EmailValidator emailValidator;
     @Autowired
@@ -30,5 +30,9 @@ public class SignupService {
                 .password(request.getPassword())
                 .userRole(UserRole.ADMIN)
                 .build());
+    }
+
+    public User changePassword(NewPasswordRequest newPassword, Long userId) {
+        return userService.changePassword(newPassword, userId);
     }
 }

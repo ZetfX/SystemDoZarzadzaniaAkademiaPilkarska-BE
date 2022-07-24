@@ -53,4 +53,8 @@ public class AdminCoachWrapperService {
     public DeleteResponse deleteEvent(Long eventId){
         return eventService.deleteEvent(eventId);
     }
+
+    public AllEventsResponse getEventsByTrainingGroup(Long userId) {
+        return eventService.getEventsByTrainingGroup(userId);
+    }
 }

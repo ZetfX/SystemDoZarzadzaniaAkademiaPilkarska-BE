@@ -70,4 +70,8 @@ public class AdminCoachWrapperController {
         return ResponseEntity.ok(adminCoachWrapperService.deleteEvent(eventId));
     }
 
+    @GetMapping("/allEventsByTrainingGroup/{userId}")
+    public ResponseEntity<?> getEventsByTrainingGroup(@Valid @PathVariable("userId") Long userId) {
+        return ResponseEntity.ok(adminCoachWrapperService.getEventsByTrainingGroup(userId));
+    }
 }
