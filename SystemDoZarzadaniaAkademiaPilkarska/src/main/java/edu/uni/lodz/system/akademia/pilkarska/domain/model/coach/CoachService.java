@@ -12,12 +12,14 @@ import edu.uni.lodz.system.akademia.pilkarska.application.senders.EmailSender;
 import edu.uni.lodz.system.akademia.pilkarska.domain.model.academy.Academy;
 import edu.uni.lodz.system.akademia.pilkarska.domain.model.academy.AcademyService;
 import edu.uni.lodz.system.akademia.pilkarska.domain.model.enums.UserRole;
+import edu.uni.lodz.system.akademia.pilkarska.domain.model.player.Player;
 import edu.uni.lodz.system.akademia.pilkarska.domain.model.player.PlayerService;
 import edu.uni.lodz.system.akademia.pilkarska.domain.model.trainingGroup.TrainingGroup;
 import edu.uni.lodz.system.akademia.pilkarska.domain.model.trainingGroup.TrainingGroupService;
 import edu.uni.lodz.system.akademia.pilkarska.domain.model.user.User;
 import edu.uni.lodz.system.akademia.pilkarska.domain.model.user.UserService;
 import lombok.AllArgsConstructor;
+import java.util.Set;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -80,7 +82,7 @@ public class CoachService {
         return new DeleteResponse("Pomyślnie usunięto trenera");
     }
 
-    private Coach getCoachById(Long coachId){
+    public Coach getCoachById(Long coachId){
         return coachRepository.findById(coachId).orElseThrow(() -> new NotFoundException("Nie znaleziono trenera o takim id"));
     }
 
@@ -101,9 +103,19 @@ public class CoachService {
         return new CoachTrainingGroupResponse(coach.getTrainingGroup());
     }
 
+    public Set<Coach> getPlayerCoaches(Long userId) {
+        User user = userService.getUserById(userId);
+        Player player = playerService.getPlayerByUser(user);
 
+        return getCoachesByTrainingGroup(player.getTrainingGroup());
+    }
 
     private Coach getCoachByUser (User user){
         return coachRepository.getCoachByUser(user).orElseThrow(() -> new NotFoundException( "Nie znaleziono trenera o takim id"));
+    }
+
+    public Set<Coach> getCoachesByTrainingGroup(TrainingGroup trainingGroup)
+    {
+        return coachRepository.getCoachesByTrainingGroup(trainingGroup).orElseThrow(() -> new NotFoundException("Nie znaleziono zadnych trenerów w tej grupie treningowej"));
     }
 }

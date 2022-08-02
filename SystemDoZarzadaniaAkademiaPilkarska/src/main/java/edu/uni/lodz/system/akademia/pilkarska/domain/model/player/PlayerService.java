@@ -4,13 +4,14 @@ import edu.uni.lodz.system.akademia.pilkarska.Exceptions.exceptions.NotFoundExce
 import edu.uni.lodz.system.akademia.pilkarska.application.generators.PassGenerator;
 import edu.uni.lodz.system.akademia.pilkarska.application.requests.CreateEditPlayerRequest;
 import edu.uni.lodz.system.akademia.pilkarska.application.responses.AllPlayersResponse;
-import edu.uni.lodz.system.akademia.pilkarska.application.responses.CoachTrainingGroupResponse;
+import edu.uni.lodz.system.akademia.pilkarska.application.responses.CoachPlayersResponse;
 import edu.uni.lodz.system.akademia.pilkarska.application.responses.CreateEditPlayerResponse;
 import edu.uni.lodz.system.akademia.pilkarska.application.responses.DeleteResponse;
 import edu.uni.lodz.system.akademia.pilkarska.application.senders.EmailSender;
 import edu.uni.lodz.system.akademia.pilkarska.domain.model.academy.Academy;
 import edu.uni.lodz.system.akademia.pilkarska.domain.model.academy.AcademyService;
 import edu.uni.lodz.system.akademia.pilkarska.domain.model.coach.Coach;
+import edu.uni.lodz.system.akademia.pilkarska.domain.model.coach.CoachService;
 import edu.uni.lodz.system.akademia.pilkarska.domain.model.enums.UserRole;
 import edu.uni.lodz.system.akademia.pilkarska.domain.model.trainingGroup.TrainingGroup;
 import edu.uni.lodz.system.akademia.pilkarska.domain.model.trainingGroup.TrainingGroupService;
@@ -28,6 +29,7 @@ public class PlayerService {
     private final AcademyService academyService;
     private final TrainingGroupService trainingGroupService;
     private final UserService userService;
+
 
     public AllPlayersResponse getAllAcademyPlayers(Long academyId) {
         Academy academy = academyService.getAcademyById(academyId);
@@ -96,7 +98,7 @@ public class PlayerService {
     }
 
 
-    private Player getPlayerById(Long playerId) {
+    public Player getPlayerById(Long playerId) {
         return playerRepository.findById(playerId).orElseThrow(() -> new NotFoundException("Nie znaleziono zawodnika o takim id"));
     }
 
@@ -107,15 +109,16 @@ public class PlayerService {
     public TrainingGroup getPlayerTrainingGroup(Long userId) {
         User user = userService.getUserById(userId);
         Player player = getPlayerByUser(user);
-        if(player.getTrainingGroup() == null)
-        {
+        if (player.getTrainingGroup() == null) {
             throw new NotFoundException("Brak grupy treningowej przypisanej do zawodnika");
         }
         return player.getTrainingGroup();
     }
 
-    private Player getPlayerByUser (User user){
-        return playerRepository.getPlayerByUser(user).orElseThrow(() -> new NotFoundException( "Nie znaleziono trenera o takim id"));
+    public Player getPlayerByUser(User user) {
+        return playerRepository.getPlayerByUser(user).orElseThrow(() -> new NotFoundException("Nie znaleziono trenera o takim id"));
     }
+
+
 
 }
